@@ -5,7 +5,6 @@ import { todayStr } from './dates.js'
 const uid = () =>
   crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-export const DAILY_TARGET_PRESETS = [50, 100, 150, 200]
 export const DEFAULT_DAILY_TARGET = 50
 
 /* ------------------------------------------------------------------ */

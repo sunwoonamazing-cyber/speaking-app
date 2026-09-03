@@ -580,3 +580,9 @@
   margin-left: var(--sp-2);
   padding: 0;
 }
+
+/* 두세 자리 숫자 하나만 넣는 칸은 줄 전체를 차지할 필요가 없다 */
+.input--number {
+  max-width: 140px;
+  font-variant-numeric: tabular-nums;
+}

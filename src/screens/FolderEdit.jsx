@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { navigate } from '../router.js'
 import { FOLDER_COLORS, colorVar, pickUnusedColor } from '../colors.js'
 import {
-  DAILY_TARGET_PRESETS,
   DEFAULT_DAILY_TARGET,
   createFolder,
   deleteFolder,
@@ -70,13 +69,18 @@ export default function FolderEdit({ folderId }) {
       setError('폴더 이름을 적어 주세요.')
       return
     }
+    const target = Number(dailyTarget)
+    if (!Number.isInteger(target) || target < 1 || target > 999) {
+      setError('하루에 볼 카드 수를 1에서 999 사이로 적어 주세요.')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
       const payload = {
         name,
         color,
-        daily_target: Number(dailyTarget) || DEFAULT_DAILY_TARGET,
+        daily_target: target,
         default_mode: defaultMode,
       }
       if (isNew) {
@@ -161,30 +165,26 @@ export default function FolderEdit({ folderId }) {
 
       <section className="card stack">
         <h2 className="section-title">하루 목표</h2>
-        <div className="seg">
-          {DAILY_TARGET_PRESETS.map((n) => (
-            <button
-              key={n}
-              className={`seg__btn ${Number(dailyTarget) === n ? 'is-on' : ''}`}
-              onClick={() => setDailyTarget(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
         <div className="field">
           <label className="field__label" htmlFor="daily-target">
-            직접 입력
+            하루에 볼 카드 수
           </label>
           <input
             id="daily-target"
-            className="input"
-            type="number"
+            className="input input--number"
+            /* type="number"는 안드로이드에서 위아래 화살표가 붙고 지우기가 번거로워
+               숫자 자판만 띄우는 방식으로 둔다 */
+            type="text"
             inputMode="numeric"
-            min="1"
-            max="999"
+            pattern="[0-9]*"
+            maxLength={4}
             value={dailyTarget}
-            onChange={(e) => setDailyTarget(e.target.value)}
+            onChange={(e) => {
+              setDailyTarget(e.target.value.replace(/[^0-9]/g, ''))
+              setError(null)
+            }}
+            placeholder="예: 80"
+            autoComplete="off"
           />
         </div>
         <p className="muted">
