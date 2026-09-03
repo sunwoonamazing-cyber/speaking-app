@@ -32,7 +32,10 @@ jobs:
       # 새로고침으로 하위 경로에 직접 들어와도 앱이 뜨도록 SPA 대비
       - run: cp dist/index.html dist/404.html
 
+      # enablement: 저장소 Settings에서 Pages를 미리 켜두지 않아도 워크플로가 직접 켠다
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
