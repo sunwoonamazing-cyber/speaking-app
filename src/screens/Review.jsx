@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
 import ListenButton from '../components/ListenButton.jsx'
+import FlagPicker from '../components/FlagPicker.jsx'
+import { cardFlag, flagPatch } from '../flags.js'
 import {
   extendSession,
   getFolder,
@@ -331,10 +333,10 @@ export default function Review({ folderId, settings }) {
     })
   }
 
-  /** 어려움 표시 토글. 우선순위 점수에 +15가 붙고 어려운 문장 모음에 나온다. */
-  async function toggleFlag() {
+  /** 색깔 플래그. 어떤 색이든 붙으면 우선순위 점수에 +15가 붙는다. */
+  async function setFlag(key) {
     if (!card) return
-    const updated = await updateCard(card.id, { flagged: !card.flagged })
+    const updated = await updateCard(card.id, flagPatch(key))
     if (!updated) return
     setCards((prev) => {
       if (!prev) return prev
@@ -488,13 +490,7 @@ export default function Review({ folderId, settings }) {
           <span className="badge-count">
             {card.attempt_count > 0 ? `복습 ${card.attempt_count}회` : '새 카드'}
           </span>
-          <button
-            className={`flag-btn ${card.flagged ? 'is-on' : ''}`}
-            onClick={toggleFlag}
-            aria-pressed={Boolean(card.flagged)}
-          >
-            {card.flagged ? '어려움 표시됨' : '어려움'}
-          </button>
+          <FlagPicker value={cardFlag(card)} onChange={setFlag} />
         </span>
         <p className="serif prompt-ko">{card.korean_text}</p>
         <hr className="rule-line" />

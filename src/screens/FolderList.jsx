@@ -121,7 +121,7 @@ function Header({ showSearch }) {
         {showSearch && (
           <>
             <button className="link-btn" onClick={() => navigate('/flagged')}>
-              어려운 문장
+              표시한 문장
             </button>
             <button className="link-btn" onClick={() => navigate('/search')}>
               카드 찾기

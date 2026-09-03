@@ -1,4 +1,5 @@
 import { colorVar } from '../colors.js'
+import { cardFlag, flagLabel, flagVar } from '../flags.js'
 
 /**
  * 복습 횟수 배지.
@@ -20,11 +21,13 @@ export function AttemptBadge({ card, color }) {
   )
 }
 
-/** 어려움 표시 — flag 색은 이 자리에만 쓴다 */
-export function FlagMark() {
+/** 색깔 플래그 표식 — 플래그 색은 이 자리에만 쓴다 */
+export function FlagMark({ flag }) {
+  if (!flag) return null
   return (
-    <span className="flag-mark" title="어려움">
-      어려움
+    <span className="flag-mark" style={{ '--dot': flagVar(flag) }} title={flagLabel(flag)}>
+      <span className="flag-mark__dot" />
+      {flagLabel(flag)}
     </span>
   )
 }
@@ -35,6 +38,7 @@ export function FlagMark() {
  */
 export default function CardRow({ card, folder, showFolderName = false, onClick }) {
   const done = card.status === 'completed'
+  const flag = cardFlag(card)
   return (
     <li className={`card-row ${done ? 'is-done' : ''}`}>
       <span
@@ -48,10 +52,10 @@ export default function CardRow({ card, folder, showFolderName = false, onClick 
           <AttemptBadge card={card} color={done ? null : folder?.color} />
         </span>
         <span className="card-row__en">{card.english_text}</span>
-        {(showFolderName || done || card.flagged) && (
+        {(showFolderName || done || flag) && (
           <span className="card-row__foot">
             {showFolderName && folder && <span className="muted">{folder.name}</span>}
-            {card.flagged && <FlagMark />}
+            {flag && <FlagMark flag={flag} />}
             {done && <span className="card-row__done">암기 완료</span>}
           </span>
         )}

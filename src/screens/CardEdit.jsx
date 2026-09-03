@@ -11,6 +11,8 @@ import {
 } from '../data.js'
 import { requestPersistentStorage } from '../db.js'
 import ListenButton from '../components/ListenButton.jsx'
+import FlagPicker from '../components/FlagPicker.jsx'
+import { cardFlag, flagPatch } from '../flags.js'
 
 export default function CardEdit({ folderId, cardId, settings }) {
   const isNew = !cardId
@@ -118,10 +120,10 @@ export default function CardEdit({ folderId, cardId, settings }) {
     navigate(backTo)
   }
 
-  async function toggleFlag() {
+  async function setFlag(key) {
     setSaving(true)
     try {
-      const updated = await updateCard(cardId, { flagged: !card.flagged })
+      const updated = await updateCard(cardId, flagPatch(key))
       if (updated) setCard(updated)
     } catch (err) {
       setError(err.message || '바꾸지 못했습니다.')
@@ -302,16 +304,11 @@ export default function CardEdit({ folderId, cardId, settings }) {
         <section className="card stack">
           <h2 className="section-title">이 문장</h2>
 
-          <button
-            className={`btn btn--full ${card.flagged ? 'btn--flagged' : ''}`}
-            onClick={toggleFlag}
-            disabled={saving}
-            aria-pressed={Boolean(card.flagged)}
-          >
-            {card.flagged ? '어려움 표시 지우기' : '어려움으로 표시'}
-          </button>
+          <span className="field__label">색깔 표시</span>
+          <FlagPicker value={cardFlag(card)} onChange={setFlag} showLabels disabled={saving} />
           <p className="muted">
-            표시해 두면 어려운 문장 모음에서 따로 볼 수 있고, 복습 순서에서도 조금 앞으로 나옵니다.
+            표시해 두면 어려운 문장 화면에서 색깔별로 묶어 볼 수 있고, 복습 순서에서도 조금 앞으로
+            나옵니다. 같은 색을 다시 누르면 표시가 지워집니다.
           </p>
 
           {folders.length > 1 && (

@@ -1,4 +1,5 @@
 import { addDays, daysBetween, todayStr } from './dates.js'
+import { cardFlag } from './flags.js'
 
 /**
  * 종합 점수를 SM-2 등급(0~5)으로 바꾼다.
@@ -90,7 +91,7 @@ export function applySm2(card, grade, today = todayStr()) {
  * | 최근 점수 낮음 | 100 - last_avg_score (기록 없으면 100) | 0.2 |
  * | 복습 부족 | max(0, 5 - attempt_count) / 5 × 100 | 0.1 |
  *
- * 플래그(어려움)된 카드는 +15.
+ * 색깔로 표시한 카드는 어떤 색이든 +15.
  */
 export function priorityScore(card, today = todayStr()) {
   const overdueDays = card.review_due_date
@@ -105,7 +106,7 @@ export function priorityScore(card, today = todayStr()) {
   const fewReviews = (Math.max(0, 5 - attempts) / 5) * 100
 
   let score = overdue * 0.4 + failRate * 0.3 + lowScore * 0.2 + fewReviews * 0.1
-  if (card.flagged) score += 15
+  if (cardFlag(card)) score += 15
   return score
 }
 

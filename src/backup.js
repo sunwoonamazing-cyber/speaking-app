@@ -102,6 +102,8 @@ export function inspectBackup(text) {
 
 /** 빠진 항목을 채워 지금 쓰는 카드 모양으로 맞춘다 (예전 백업도 열리도록) */
 function normalizeCard(card) {
+  // 색이 없던 시절 백업은 flagged만 있다 — 빨강으로 옮긴다
+  const flag = card.flag ?? (card.flagged ? 'red' : null)
   return {
     flagged: false,
     status: 'new',
@@ -116,6 +118,8 @@ function normalizeCard(card) {
     fail_count: 0,
     created_at: new Date().toISOString(),
     ...card,
+    flag,
+    flagged: Boolean(flag),
   }
 }
 

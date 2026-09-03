@@ -651,46 +651,6 @@
   gap: var(--sp-3);
 }
 
-/* ---------- 어려움 표시 ---------- */
-
-/* flag 색은 어려움 표시에만 쓴다 (accent, 폴더 색과 자리가 겹치지 않는다) */
-.flag-mark {
-  padding: 1px 7px;
-  border: 1px solid var(--flag);
-  border-radius: 9px;
-  color: var(--flag);
-  font-size: 11px;
-}
-
-.flag-btn {
-  padding: 3px 10px;
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-  background: none;
-  color: var(--ink-soft);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.flag-btn.is-on {
-  border-color: var(--flag);
-  color: var(--flag);
-  font-weight: 600;
-}
-
-.btn--flagged {
-  border-color: var(--flag);
-  color: var(--flag);
-  font-weight: 600;
-}
-
-.prompt-card__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
 /* 머리말 동작이 셋이 되면 좁은 화면에서 빠듯해 간격을 줄인다 */
 .head__actions {
   gap: var(--sp-3);
@@ -704,4 +664,133 @@
 
 .head__actions--below + .rule-line {
   margin-top: var(--sp-3);
+}
+
+/* ---------- 색깔 플래그 ---------- */
+
+.flag-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.flag-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+}
+
+.flag-dot__fill {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dot);
+  /* 안 고른 색은 물러나 있게 두어 고른 색이 바로 보이게 한다 */
+  opacity: 0.4;
+  flex: none;
+}
+
+.flag-dot.is-on .flag-dot__fill {
+  opacity: 1;
+}
+
+.flag-dot.is-on {
+  border-color: var(--dot);
+}
+
+.flag-dot__label {
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding-right: var(--sp-1);
+}
+
+.flag-dot.is-on .flag-dot__label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.flag-picker--labeled {
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.flag-dot:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 카드 목록에 붙는 표식 */
+.flag-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px 1px 6px;
+  border: 1px solid var(--dot);
+  border-radius: 9px;
+  color: var(--dot);
+  font-size: 11px;
+}
+
+.flag-mark__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+/* 색깔별 거르개 */
+.flag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.flag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 var(--sp-3);
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.flag-chip__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.flag-chip.is-on {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.flag-heading__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.prompt-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
