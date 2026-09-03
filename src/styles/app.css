@@ -176,3 +176,219 @@
   border-color: var(--flag);
   color: var(--flag);
 }
+
+/* ---------- 머리말 가로 배치 ---------- */
+
+.head--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.head--row .head__title {
+  margin: 0;
+}
+
+/* 폴더 이름 옆 작은 점 */
+.folder-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: var(--sp-2);
+  vertical-align: middle;
+}
+
+/* ---------- 폴더 목록 ---------- */
+
+.folder-list {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.folder-item {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-3);
+  background: var(--surface);
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+/* 색인 탭 모양 세로 막대 — 폴더 색은 여기서만 쓴다 */
+.folder-item__tab {
+  width: 4px;
+  flex: none;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.folder-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-item__name {
+  font-size: 21px;
+  line-height: 1.3;
+}
+
+.folder-item__today {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.folder-item__meta {
+  font-size: 13px;
+}
+
+/* 메타 정보를 가운데점으로 잇지 않고 여백으로만 띄운다 */
+.folder-item__gap {
+  display: inline-block;
+  width: var(--sp-4);
+}
+
+.folder-item__order {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) 0;
+}
+
+.folder-item__order .btn {
+  min-height: 36px;
+  font-size: 14px;
+}
+
+/* ---------- 색 고르기 ---------- */
+
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.color-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  background: var(--paper);
+  border: var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.color-chip.is-on {
+  border-color: var(--ink);
+}
+
+.color-chip__bar {
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.color-chip__label {
+  white-space: nowrap;
+}
+
+/* ---------- 카드 목록 ---------- */
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-3);
+  border-bottom: var(--border);
+}
+
+.card-row:last-child {
+  border-bottom: 0;
+}
+
+/* 이 카드가 어느 폴더 것인지만 알려주는 얇은 세로 선 */
+.card-row__edge {
+  width: 2px;
+  flex: none;
+  border-radius: 1px;
+}
+
+.card-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-row__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.card-row__ko {
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.card-row__en {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.card-row__status {
+  font-size: 12px;
+}
+
+/* ---------- 여러 줄 입력 ---------- */
+
+.input--area {
+  min-height: 76px;
+  padding: var(--sp-3);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* ---------- 되돌릴 수 없는 동작 ---------- */
+
+.btn--danger {
+  border-color: var(--flag);
+  color: var(--flag);
+  font-weight: 600;
+}
+
+.btn-row--spaced {
+  margin-top: var(--sp-4);
+}
