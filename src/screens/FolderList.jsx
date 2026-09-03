@@ -24,7 +24,7 @@ export default function FolderList() {
   if (rows === null) {
     return (
       <>
-        <Header />
+        <Header showSearch={false} />
         <p className="muted">불러오는 중…</p>
       </>
     )
@@ -32,7 +32,7 @@ export default function FolderList() {
 
   return (
     <>
-      <Header />
+      <Header showSearch={rows.length > 0} />
 
       {rows.length === 0 ? (
         <section className="card stack">
@@ -102,15 +102,22 @@ export default function FolderList() {
   )
 }
 
-function Header() {
+function Header({ showSearch }) {
   return (
     <header className="head head--row">
       <div>
         <h1 className="serif head__title">영어문장모음집</h1>
       </div>
-      <button className="link-btn" onClick={() => navigate('/settings')}>
-        설정
-      </button>
+      <span className="head__actions">
+        {showSearch && (
+          <button className="link-btn" onClick={() => navigate('/search')}>
+            카드 찾기
+          </button>
+        )}
+        <button className="link-btn" onClick={() => navigate('/settings')}>
+          설정
+        </button>
+      </span>
     </header>
   )
 }

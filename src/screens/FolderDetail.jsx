@@ -87,12 +87,22 @@ export default function FolderDetail({ folderId }) {
       <section className="card stack">
         <div className="head--row">
           <h2 className="section-title">카드 {cards.length}장</h2>
-          <button
-            className="link-btn"
-            onClick={() => navigate(`/folders/${folderId}/cards/new`)}
-          >
-            카드 추가
-          </button>
+          <span className="head__actions">
+            {cards.length > 0 && (
+              <button
+                className="link-btn"
+                onClick={() => navigate(`/folders/${folderId}/search`)}
+              >
+                찾기
+              </button>
+            )}
+            <button
+              className="link-btn"
+              onClick={() => navigate(`/folders/${folderId}/cards/new`)}
+            >
+              카드 추가
+            </button>
+          </span>
         </div>
 
         {cards.length === 0 ? (

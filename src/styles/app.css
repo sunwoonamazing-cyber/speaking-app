@@ -392,3 +392,11 @@
 .btn-row--spaced {
   margin-top: var(--sp-4);
 }
+
+/* 머리말 오른쪽에 놓이는 조용한 동작 묶음 */
+.head__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex: none;
+}

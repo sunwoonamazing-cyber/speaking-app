@@ -17,6 +17,7 @@ export default function CardEdit({ folderId, cardId }) {
   const [error, setError] = useState(null)
   const [justAdded, setJustAdded] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
 
   const koreanRef = useRef(null)
 
@@ -96,6 +97,15 @@ export default function CardEdit({ folderId, cardId }) {
     }
   }
 
+  // 적던 내용이 있으면 실수로 날리지 않게 한 번 물어본다
+  function handleLeave() {
+    if (korean.trim() || english.trim()) {
+      setConfirmLeave(true)
+      return
+    }
+    navigate(backTo)
+  }
+
   async function handleDelete() {
     setSaving(true)
     try {
@@ -147,6 +157,7 @@ export default function CardEdit({ folderId, cardId }) {
             onChange={(e) => {
               setKorean(e.target.value)
               setError(null)
+              setConfirmLeave(false)
             }}
             placeholder="복습할 때 보여줄 한국어 문장"
           />
@@ -164,6 +175,7 @@ export default function CardEdit({ folderId, cardId }) {
             onChange={(e) => {
               setEnglish(e.target.value)
               setError(null)
+              setConfirmLeave(false)
             }}
             placeholder="This is the answer sentence."
             lang="en"
@@ -195,7 +207,28 @@ export default function CardEdit({ folderId, cardId }) {
             >
               저장하고 목록으로
             </button>
-            {justAdded > 0 && (
+
+            {confirmLeave ? (
+              <>
+                <p className="notice notice--bad">
+                  적던 내용이 남아 있습니다. 저장하지 않고 나갈까요?
+                </p>
+                <div className="btn-row">
+                  <button className="btn" onClick={() => setConfirmLeave(false)}>
+                    계속 적기
+                  </button>
+                  <button className="btn btn--danger" onClick={() => navigate(backTo)}>
+                    저장하지 않고 나가기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button className="btn btn--full" onClick={handleLeave} disabled={saving}>
+                목록으로
+              </button>
+            )}
+
+            {justAdded > 0 && !confirmLeave && (
               <p className="notice notice--ok">이번에 {justAdded}장 넣었습니다.</p>
             )}
           </>

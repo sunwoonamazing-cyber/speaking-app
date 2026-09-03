@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import UpdatePrompt from './components/UpdatePrompt.jsx'
 import CardEdit from './screens/CardEdit.jsx'
+import CardSearch from './screens/CardSearch.jsx'
 import FolderDetail from './screens/FolderDetail.jsx'
 import FolderEdit from './screens/FolderEdit.jsx'
 import FolderList from './screens/FolderList.jsx'
@@ -18,10 +19,12 @@ function pickScreen(route, settings, onSaveSettings) {
 
   if (seg.length === 0) return <FolderList />
   if (seg[0] === 'settings') return <Settings settings={settings} onSave={onSaveSettings} />
+  if (seg[0] === 'search') return <CardSearch folderId={null} />
 
   if (seg[0] === 'folders') {
     if (seg[1] === 'new') return <FolderEdit folderId={null} />
     if (seg[1] && seg[2] === 'edit') return <FolderEdit folderId={seg[1]} />
+    if (seg[1] && seg[2] === 'search') return <CardSearch folderId={seg[1]} />
     if (seg[1] && seg[2] === 'cards' && seg[3] === 'new') return <CardEdit folderId={seg[1]} />
     if (seg[1]) return <FolderDetail folderId={seg[1]} />
   }
