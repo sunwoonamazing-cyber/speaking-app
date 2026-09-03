@@ -400,3 +400,183 @@
   gap: var(--sp-4);
   flex: none;
 }
+
+/* ---------- 복습 화면 ---------- */
+
+.head__title--small {
+  font-size: 20px;
+  color: var(--ink-soft);
+}
+
+.progress {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.seg--tight {
+  margin-bottom: var(--sp-4);
+}
+
+.prompt-card {
+  gap: var(--sp-2);
+}
+
+/* 오늘 외워야 할 문장 — 화면에서 가장 큰 글씨 */
+.prompt-ko {
+  font-size: 24px;
+  line-height: 1.5;
+  margin-top: var(--sp-1);
+}
+
+.prompt-answer {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.done-title {
+  font-size: 24px;
+}
+
+/* ---------- 입력 음량 막대 ---------- */
+
+.meter {
+  height: 10px;
+  background: var(--paper);
+  border: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.06s linear;
+}
+
+.player {
+  width: 100%;
+  height: 40px;
+}
+
+/* ---------- 점수 ---------- */
+
+.score-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.score-big {
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-side {
+  display: flex;
+  flex-direction: column;
+}
+
+.score-grade {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.score-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 14px;
+}
+
+.score-row__label {
+  width: 52px;
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.score-row__bar {
+  flex: 1;
+  height: 6px;
+  background: var(--paper);
+  border: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.score-row__fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.score-row__value {
+  width: 30px;
+  flex: none;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 인식 결과 / 단어별 표시 ---------- */
+
+.recognized {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.word-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.mark__note {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.mark--ok {
+  color: var(--ink);
+}
+
+/* 잘못 말한 단어 / 덧붙인 단어 / 빠뜨린 단어 — flag 색은 여기서만 */
+.mark--wrong {
+  color: var(--flag);
+  border-bottom: 2px solid var(--flag);
+}
+
+.mark--extra {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.mark--missing {
+  color: var(--flag);
+  opacity: 0.85;
+  border-bottom: 1px dashed var(--flag);
+}
+
+/* 안내 문구 안에 들어가는 링크는 문장과 붙지 않게 띄운다 */
+.notice .link-btn {
+  margin-left: var(--sp-2);
+  padding: 0;
+}

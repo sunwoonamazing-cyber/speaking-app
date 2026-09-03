@@ -5,6 +5,7 @@ import CardSearch from './screens/CardSearch.jsx'
 import FolderDetail from './screens/FolderDetail.jsx'
 import FolderEdit from './screens/FolderEdit.jsx'
 import FolderList from './screens/FolderList.jsx'
+import Review from './screens/Review.jsx'
 import Settings from './screens/Settings.jsx'
 import { useRoute } from './router.js'
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from './settings.js'
@@ -25,6 +26,7 @@ function pickScreen(route, settings, onSaveSettings) {
     if (seg[1] === 'new') return <FolderEdit folderId={null} />
     if (seg[1] && seg[2] === 'edit') return <FolderEdit folderId={seg[1]} />
     if (seg[1] && seg[2] === 'search') return <CardSearch folderId={seg[1]} />
+    if (seg[1] && seg[2] === 'review') return <Review folderId={seg[1]} settings={settings} />
     if (seg[1] && seg[2] === 'cards' && seg[3] === 'new') return <CardEdit folderId={seg[1]} />
     if (seg[1]) return <FolderDetail folderId={seg[1]} />
   }

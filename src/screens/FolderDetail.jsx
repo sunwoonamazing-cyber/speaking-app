@@ -78,10 +78,17 @@ export default function FolderDetail({ folderId }) {
       <section className="card stack">
         <h2 className="section-title">오늘의 학습</h2>
         <p>{today > 0 ? `오늘 볼 카드 ${today}장` : '오늘 볼 카드가 없습니다.'}</p>
-        <button className="btn btn--primary btn--full" disabled>
-          오늘의 학습 시작하기
+        <button
+          className="btn btn--primary btn--full"
+          onClick={() => navigate(`/folders/${folderId}/review`)}
+          disabled={cards.length === 0}
+        >
+          복습 시작하기
         </button>
-        <p className="muted">복습 화면은 4단계에서, 오늘의 묶음 구성은 6단계에서 붙습니다.</p>
+        <p className="muted">
+          지금은 완료되지 않은 카드를 등록 순서대로 봅니다. 오늘의 묶음 구성과 이어보기는 6단계에서
+          붙습니다.
+        </p>
       </section>
 
       <section className="card stack">
