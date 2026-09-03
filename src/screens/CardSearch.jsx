@@ -121,11 +121,12 @@ export default function CardSearch({ folderId }) {
           <ul className="card-list">
             {results.map((card) => {
               const folder = folderById.get(card.folder_id)
+              const done = card.status === 'completed'
               return (
-                <li key={card.id} className="card-row">
+                <li key={card.id} className={`card-row ${done ? 'is-done' : ''}`}>
                   <span
                     className="card-row__edge"
-                    style={{ background: colorVar(folder?.color) }}
+                    style={done ? undefined : { background: colorVar(folder?.color) }}
                     aria-hidden="true"
                   />
                   <button
@@ -134,12 +135,13 @@ export default function CardSearch({ folderId }) {
                   >
                     <span className="card-row__top">
                       <span className="serif card-row__ko">{card.korean_text}</span>
-                      <AttemptBadge card={card} />
+                      <AttemptBadge card={card} color={done ? null : folder?.color} />
                     </span>
                     <span className="card-row__en">{card.english_text}</span>
-                    {scopeAll && folder && (
-                      <span className="muted card-row__status">{folder.name}</span>
-                    )}
+                    <span className="card-row__foot">
+                      {scopeAll && folder && <span className="muted">{folder.name}</span>}
+                      {done && <span className="card-row__done">암기 완료</span>}
+                    </span>
                   </button>
                 </li>
               )

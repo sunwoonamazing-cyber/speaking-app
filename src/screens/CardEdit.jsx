@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
-import { createCard, deleteCard, getCard, getFolder, updateCard } from '../data.js'
+import {
+  createCard,
+  deleteCard,
+  getCard,
+  getFolder,
+  setCardCompleted,
+  updateCard,
+} from '../data.js'
 import { requestPersistentStorage } from '../db.js'
 import ListenButton from '../components/ListenButton.jsx'
 
@@ -105,6 +112,19 @@ export default function CardEdit({ folderId, cardId, settings }) {
       return
     }
     navigate(backTo)
+  }
+
+  async function toggleCompleted(next) {
+    setSaving(true)
+    setError(null)
+    try {
+      const updated = await setCardCompleted(cardId, next)
+      if (updated) setCard(updated)
+    } catch (err) {
+      setError(err.message || '바꾸지 못했습니다.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleDelete() {
@@ -256,7 +276,9 @@ export default function CardEdit({ folderId, cardId, settings }) {
           </div>
           <div className="check-row">
             <span className="check-row__label">상태</span>
-            <span className="check-row__value">
+            <span
+              className={`check-row__value ${card.status === 'completed' ? 'check-row__value--ok' : ''}`}
+            >
               {card.status === 'new'
                 ? '새 카드'
                 : card.status === 'learning'
@@ -264,6 +286,26 @@ export default function CardEdit({ folderId, cardId, settings }) {
                   : '암기 완료'}
             </span>
           </div>
+
+          {card.status === 'completed' ? (
+            <>
+              <p className="muted">
+                이 카드는 오늘의 학습에 나오지 않습니다. 언제든 다시 되돌릴 수 있습니다.
+              </p>
+              <button className="btn btn--full" onClick={() => toggleCompleted(false)} disabled={saving}>
+                복습 목록으로 되돌리기
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="muted">
+                다 외운 문장은 완료로 표시하면 오늘의 학습에서 빠집니다.
+              </p>
+              <button className="btn btn--full" onClick={() => toggleCompleted(true)} disabled={saving}>
+                암기 완료로 표시
+              </button>
+            </>
+          )}
 
           <hr className="rule-line" />
 

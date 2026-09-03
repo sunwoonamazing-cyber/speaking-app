@@ -74,8 +74,9 @@ export function applySm2(card, grade, today = todayStr()) {
     repetitions,
     ease_factor: Math.round(ease * 1000) / 1000,
     review_due_date: addDays(today, interval),
-    // 한 번이라도 본 카드는 학습 중으로 넘어간다 (완료 처리한 카드는 그대로 둔다)
-    status: card.status === 'completed' ? 'completed' : 'learning',
+    // 채점을 했다는 것은 아직 학습 중이라는 뜻이다.
+    // 암기 완료는 사용자가 직접 누를 때만 정해진다.
+    status: 'learning',
   }
 }
 

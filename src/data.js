@@ -354,3 +354,19 @@ export async function listSessions() {
   const db = await getDB()
   return db.getAll('sessions')
 }
+
+/**
+ * 암기 완료 처리 / 되돌리기.
+ * 완료한 카드는 오늘의 묶음에서 빠지고 폴더의 완료 수에 잡힌다.
+ * 되돌리면 바로 복습 대상이 되도록 예정일을 오늘로 둔다.
+ */
+export async function setCardCompleted(id, completed, today = todayStr()) {
+  if (completed) return updateCard(id, { status: 'completed' })
+
+  const card = await getCard(id)
+  if (!card) return null
+  return updateCard(id, {
+    status: card.attempt_count > 0 ? 'learning' : 'new',
+    review_due_date: card.attempt_count > 0 ? today : null,
+  })
+}

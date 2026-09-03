@@ -594,3 +594,59 @@
   font-weight: 600;
   background: var(--accent-weak);
 }
+
+/* ---------- 복습 횟수 배지 ---------- */
+
+/* 폴더 색 동그라미 안의 숫자.
+   폴더 색은 라이트에서 어둡고 다크에서 밝으므로, 글자는 paper 색이면
+   두 테마 모두에서 자동으로 반대 밝기가 된다 */
+.badge-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  flex: none;
+  color: var(--paper);
+  background: var(--rule);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* 암기 완료한 카드는 폴더 색을 거두고 조용한 테두리만 남긴다 */
+.badge-round--muted {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* ---------- 암기 완료한 카드 ---------- */
+
+.card-row.is-done .card-row__edge {
+  background: var(--rule);
+}
+
+.card-row.is-done .card-row__ko,
+.card-row.is-done .card-row__en {
+  color: var(--ink-soft);
+}
+
+.card-row__done {
+  align-self: flex-start;
+  padding: 1px 7px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.card-row__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

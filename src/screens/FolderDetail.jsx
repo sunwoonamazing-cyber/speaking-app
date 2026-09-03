@@ -4,16 +4,20 @@ import { colorVar } from '../colors.js'
 import { countDueToday, getFolder, getSession, listCards } from '../data.js'
 
 /**
- * 복습 횟수 배지 — 조용한 정보라 rule 색의 작은 숫자로만 둔다.
- * 판단 기준은 status가 아니라 attempt_count다. status는 SM-2가 붙기 전까지
- * 계속 'new'로 남아 있어서, status를 보면 복습을 해도 배지가 안 바뀐다.
+ * 복습 횟수 배지.
+ * 숫자는 폴더 색 동그라미 안에 넣어 눈에 띄게 하고, 아직 안 본 카드는 글자로 둔다.
+ * 판단 기준은 status가 아니라 attempt_count다 — status는 암기 완료 여부를 나타낸다.
  */
-export function AttemptBadge({ card }) {
+export function AttemptBadge({ card, color }) {
   if (!card.attempt_count) {
     return <span className="badge-count">새 카드</span>
   }
   return (
-    <span className="badge-count" title={`복습 ${card.attempt_count}회`}>
+    <span
+      className={`badge-round ${color ? '' : 'badge-round--muted'}`}
+      style={color ? { background: colorVar(color) } : undefined}
+      title={`복습 ${card.attempt_count}회`}
+    >
       {card.attempt_count}
     </span>
   )
@@ -134,28 +138,31 @@ export default function FolderDetail({ folderId }) {
           </p>
         ) : (
           <ul className="card-list">
-            {cards.map((card) => (
-              <li key={card.id} className="card-row">
-                <span
-                  className="card-row__edge"
-                  style={{ background: colorVar(folder.color) }}
-                  aria-hidden="true"
-                />
-                <button
-                  className="card-row__main"
-                  onClick={() => navigate(`/cards/${card.id}/edit`)}
-                >
-                  <span className="card-row__top">
-                    <span className="serif card-row__ko">{card.korean_text}</span>
-                    <AttemptBadge card={card} />
-                  </span>
-                  <span className="card-row__en">{card.english_text}</span>
-                  {card.status === 'completed' && (
-                    <span className="muted card-row__status">암기 완료</span>
-                  )}
-                </button>
-              </li>
-            ))}
+            {cards.map((card) => {
+              const done = card.status === 'completed'
+              return (
+                <li key={card.id} className={`card-row ${done ? 'is-done' : ''}`}>
+                  {/* 학습 중인 카드만 폴더 색을 띤다. 완료한 카드는 색을 거두어
+                      한눈에 "이건 이제 안 봐도 되는 카드"로 읽히게 한다 */}
+                  <span
+                    className="card-row__edge"
+                    style={done ? undefined : { background: colorVar(folder.color) }}
+                    aria-hidden="true"
+                  />
+                  <button
+                    className="card-row__main"
+                    onClick={() => navigate(`/cards/${card.id}/edit`)}
+                  >
+                    <span className="card-row__top">
+                      <span className="serif card-row__ko">{card.korean_text}</span>
+                      <AttemptBadge card={card} color={done ? null : folder.color} />
+                    </span>
+                    <span className="card-row__en">{card.english_text}</span>
+                    {done && <span className="card-row__done">암기 완료</span>}
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

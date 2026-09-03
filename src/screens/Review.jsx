@@ -5,6 +5,7 @@ import {
   extendSession,
   getFolder,
   loadSessionCards,
+  setCardCompleted,
   startOrResumeSession,
   updateCard,
   updateSession,
@@ -14,7 +15,6 @@ import { createPushStream, overallScore, startAssessment } from '../speech/asses
 import { scoreTyping } from '../speech/typing.js'
 import {
   MANUAL_AGAIN,
-  MANUAL_GOT_IT,
   applySm2,
   describeDue,
   gradeLabel,
@@ -331,6 +331,19 @@ export default function Review({ folderId, settings }) {
     })
   }
 
+  /** 암기 완료 표시 / 되돌리기. 실수로 눌러도 바로 되돌릴 수 있게 해 둔다. */
+  async function setCompleted(done) {
+    if (!card) return
+    const updated = await setCardCompleted(card.id, done)
+    if (!updated) return
+    setCards((prev) => {
+      if (!prev) return prev
+      const copy = [...prev]
+      copy[index] = updated
+      return copy
+    })
+  }
+
   async function goNext() {
     resetCardState()
     const nextIndex = index + 1
@@ -528,21 +541,34 @@ export default function Review({ folderId, settings }) {
 
           <hr className="rule-line" />
 
-          <p className="muted">채점이 실제 느낌과 다르면 직접 정할 수 있습니다.</p>
-          <div className="btn-row">
-            <button
-              className={`btn ${outcome.manual && !isPass(outcome.grade) ? 'is-chosen' : ''}`}
-              onClick={() => applyGrade({ grade: MANUAL_AGAIN, manual: true })}
-            >
-              다시 볼래요
-            </button>
-            <button
-              className={`btn ${outcome.manual && isPass(outcome.grade) ? 'is-chosen' : ''}`}
-              onClick={() => applyGrade({ grade: MANUAL_GOT_IT, manual: true })}
-            >
-              알겠어요
-            </button>
-          </div>
+          {card.status === 'completed' ? (
+            <>
+              <p className="notice notice--ok">
+                이 카드는 앞으로 오늘의 학습에 나오지 않습니다.
+              </p>
+              <button className="btn btn--full" onClick={() => setCompleted(false)}>
+                되돌리기
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="muted">채점이 실제 느낌과 다르면 직접 정할 수 있습니다.</p>
+              <div className="btn-row">
+                <button
+                  className={`btn ${outcome.manual && !isPass(outcome.grade) ? 'is-chosen' : ''}`}
+                  onClick={() => applyGrade({ grade: MANUAL_AGAIN, manual: true })}
+                >
+                  다시 볼래요
+                </button>
+                <button className="btn" onClick={() => setCompleted(true)}>
+                  암기 완료
+                </button>
+              </div>
+              <p className="muted">
+                암기 완료로 표시하면 이 카드는 오늘의 학습에서 빠집니다.
+              </p>
+            </>
+          )}
         </section>
       )}
 

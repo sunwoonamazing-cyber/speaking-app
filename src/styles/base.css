@@ -125,7 +125,9 @@ a {
 }
 
 .badge-count {
-  color: var(--rule);
+  /* 명세는 rule 색을 말하지만 실제 화면에서 거의 안 보여
+     한 단계 진한 ink-soft로 둔다. 여전히 강조는 아니다 */
+  color: var(--ink-soft);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   /* 좁은 화면에서 '새 카드'가 두 줄로 쪼개지지 않게 한다 */
