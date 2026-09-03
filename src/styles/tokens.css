@@ -1,0 +1,97 @@
+/* ------------------------------------------------------------------
+   디자인 토큰 — 명세 "디자인 방향" 항목의 값
+   라이트가 기본, 다크는 (1) 시스템 다크 + data-theme 미지정,
+   (2) data-theme="dark" 명시  두 경우 모두 적용된다.
+   ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  /* 기본 색 */
+  --paper: #eef0ea;
+  --ink: #24282b;
+  --surface: #f8f9f5;
+  --rule: #c9cdbf;
+  --accent: #3f6752;
+  --flag: #a6572e;
+
+  /* 파생 색 (직접 만든 보조값 — 위 6색에서만 유도) */
+  --ink-soft: #5d6367;
+  --accent-ink: #f8f9f5; /* accent 배경 위의 글자색 */
+  --accent-weak: rgba(63, 103, 82, 0.1);
+
+  /* 폴더 색 팔레트 (6색) */
+  --folder-blue: #4e6a7d;
+  --folder-violet: #55597e;
+  --folder-plum: #6e5068;
+  --folder-ochre: #8a6e3b;
+  --folder-moss: #5e7355;
+  --folder-fog: #5a6068;
+
+  /* 타이포 */
+  --font-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Noto Serif KR', 'Apple SD Gothic Neo', Georgia, serif;
+
+  /* 형태 — 그림자 없음, 모서리는 살짝만 */
+  --radius: 4px;
+  --border: 1px solid var(--rule);
+
+  /* 간격 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* 본문 최대 폭 (모바일 세로 단일 컬럼) */
+  --content-max: 560px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --paper: #1b1d19;
+    --ink: #e7e9e2;
+    --surface: #24261f;
+    --rule: #3a3d33;
+    --accent: #7fa98d;
+    --flag: #d98657;
+
+    --ink-soft: #a4a89e;
+    --accent-ink: #1b1d19;
+    --accent-weak: rgba(127, 169, 141, 0.14);
+
+    --folder-blue: #8aa6b7;
+    --folder-violet: #9095b8;
+    --folder-plum: #ab8ca5;
+    --folder-ochre: #c3a66e;
+    --folder-moss: #93a788;
+    --folder-fog: #979ca4;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #1b1d19;
+  --ink: #e7e9e2;
+  --surface: #24261f;
+  --rule: #3a3d33;
+  --accent: #7fa98d;
+  --flag: #d98657;
+
+  --ink-soft: #a4a89e;
+  --accent-ink: #1b1d19;
+  --accent-weak: rgba(127, 169, 141, 0.14);
+
+  --folder-blue: #8aa6b7;
+  --folder-violet: #9095b8;
+  --folder-plum: #ab8ca5;
+  --folder-ochre: #c3a66e;
+  --folder-moss: #93a788;
+  --folder-fog: #979ca4;
+}

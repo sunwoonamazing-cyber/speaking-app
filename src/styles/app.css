@@ -1,0 +1,149 @@
+.head {
+  margin-bottom: var(--sp-5);
+}
+
+.head__title {
+  font-size: 30px;
+  letter-spacing: -0.01em;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.stack + .stack {
+  margin-top: var(--sp-4);
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* ---------- 점검 항목 줄 ---------- */
+
+.check-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: 15px;
+}
+
+.check-row__label {
+  color: var(--ink-soft);
+}
+
+.check-row__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.check-row__value--ok {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.check-row__value--warn {
+  color: var(--flag);
+  font-weight: 600;
+}
+
+/* ---------- 세그먼트 선택 ---------- */
+
+.seg {
+  display: flex;
+  border: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.seg__btn {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-right: var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.seg__btn:last-child {
+  border-right: 0;
+}
+
+.seg__btn.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/* ---------- 서체 견본 ---------- */
+
+.sample-serif {
+  font-size: 22px;
+  line-height: 1.5;
+}
+
+.sample-sans {
+  font-size: 17px;
+}
+
+/* ---------- 색 견본 ---------- */
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.swatch__chip {
+  height: 34px;
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+.folder-demo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-demo__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: var(--border);
+  font-size: 15px;
+}
+
+.folder-demo__item:last-child {
+  border-bottom: 0;
+}
+
+/* 색인 탭 모양 세로 막대 (폭 4px) */
+.folder-demo__tab {
+  width: 4px;
+  align-self: stretch;
+  min-height: 26px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.folder-demo__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}

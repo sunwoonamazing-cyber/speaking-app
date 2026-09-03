@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dev-dist/
+
+# Azure 키 등 비밀값이 담길 수 있는 파일 — 절대 커밋하지 않는다
+.env
+.env.*
+*.local
+secrets.json
+
+.DS_Store
+*.log
