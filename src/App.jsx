@@ -27,11 +27,13 @@ function pickScreen(route, settings, onSaveSettings) {
     if (seg[1] && seg[2] === 'edit') return <FolderEdit folderId={seg[1]} />
     if (seg[1] && seg[2] === 'search') return <CardSearch folderId={seg[1]} />
     if (seg[1] && seg[2] === 'review') return <Review folderId={seg[1]} settings={settings} />
-    if (seg[1] && seg[2] === 'cards' && seg[3] === 'new') return <CardEdit folderId={seg[1]} />
+    if (seg[1] && seg[2] === 'cards' && seg[3] === 'new')
+      return <CardEdit folderId={seg[1]} settings={settings} />
     if (seg[1]) return <FolderDetail folderId={seg[1]} />
   }
 
-  if (seg[0] === 'cards' && seg[1] && seg[2] === 'edit') return <CardEdit cardId={seg[1]} />
+  if (seg[0] === 'cards' && seg[1] && seg[2] === 'edit')
+    return <CardEdit cardId={seg[1]} settings={settings} />
 
   return <FolderList />
 }

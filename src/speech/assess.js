@@ -106,6 +106,14 @@ function interpret(SpeechSDK, result) {
   }
 
   const pa = SpeechSDK.PronunciationAssessmentResult.fromResult(result)
+  const words = extractWords(SpeechSDK, result, pa)
+
+  // Azure는 주변 소음을 문장으로 '인식됨' 처리해 돌려주기도 한다.
+  // EnableMiscue를 켜 두면 아무 말도 안 했을 때 정답 단어가 전부 Omission으로 온다 —
+  // 그렇게 실제로 말한 단어가 하나도 없으면 0점 오답이 아니라 인식 실패로 다룬다.
+  if (words.length > 0 && words.every((w) => w.errorType === 'Omission')) {
+    return { ok: false, reason: 'nomatch' }
+  }
 
   // 운율 점수는 계정·리전에 따라 안 올 수 있다. 없으면 화면에서 숨긴다.
   const prosody = Number.isFinite(pa.prosodyScore) && pa.prosodyScore > 0 ? pa.prosodyScore : null
@@ -122,7 +130,7 @@ function interpret(SpeechSDK, result) {
     scores,
     overall: overallScore(scores),
     recognizedText: result.text,
-    words: extractWords(SpeechSDK, result, pa),
+    words,
   }
 }
 

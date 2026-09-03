@@ -3,9 +3,13 @@ import { navigate } from '../router.js'
 import { colorVar } from '../colors.js'
 import { countDueToday, getFolder, listCards } from '../data.js'
 
-/** 복습 횟수 배지 — 조용한 정보라 rule 색의 작은 숫자로만 둔다 */
+/**
+ * 복습 횟수 배지 — 조용한 정보라 rule 색의 작은 숫자로만 둔다.
+ * 판단 기준은 status가 아니라 attempt_count다. status는 SM-2가 붙기 전까지
+ * 계속 'new'로 남아 있어서, status를 보면 복습을 해도 배지가 안 바뀐다.
+ */
 export function AttemptBadge({ card }) {
-  if (card.status === 'new' || card.attempt_count === 0) {
+  if (!card.attempt_count) {
     return <span className="badge-count">새 카드</span>
   }
   return (

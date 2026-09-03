@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
+import ListenButton from '../components/ListenButton.jsx'
 import { getFolder, listCards, updateCard } from '../data.js'
 import { MicRecorder } from '../audio/recorder.js'
 import { createPushStream, overallScore, startAssessment } from '../speech/assess.js'
@@ -7,6 +8,8 @@ import { scoreTyping } from '../speech/typing.js'
 import { gradeLabel, isPass, scoreToGrade } from '../sm2.js'
 
 const MAX_RECORD_SECONDS = 30
+// 응답이 끝내 안 오면 '채점하는 중'에 갇히지 않도록 여기서 끊는다
+const ASSESS_TIMEOUT_MS = 20000
 
 export default function Review({ folderId, settings }) {
   const [folder, setFolder] = useState(null)
@@ -133,7 +136,18 @@ export default function Review({ folderId, settings }) {
     })
 
     setPhase('preparing')
-    const pushStream = await createPushStream()
+
+    let pushStream
+    try {
+      pushStream = await createPushStream()
+    } catch {
+      setPhase('ready')
+      setProblem({
+        kind: 'network',
+        message: '채점 기능을 내려받지 못했습니다. 인터넷을 확인해 주세요.',
+      })
+      return
+    }
     pushStreamRef.current = pushStream
 
     const recorder = new MicRecorder({
@@ -160,13 +174,22 @@ export default function Review({ folderId, settings }) {
 
     setPhase('recording')
 
-    assessRef.current = await startAssessment({
-      key: settings.azure_key,
-      region: settings.azure_region,
-      language: settings.accent || 'en-US',
-      referenceText: card.english_text,
-      pushStream,
-    })
+    try {
+      assessRef.current = await startAssessment({
+        key: settings.azure_key,
+        region: settings.azure_region,
+        language: settings.accent || 'en-US',
+        referenceText: card.english_text,
+        pushStream,
+      })
+    } catch (err) {
+      await recorder.stop()
+      recorderRef.current = null
+      pushStreamRef.current = null
+      setPhase('ready')
+      setProblem({ kind: 'network', message: '채점을 시작하지 못했습니다. ' + (err?.message || '') })
+      return
+    }
 
     // 실수로 계속 켜 두는 일이 없도록 최대 길이에서 자동으로 멈춘다
     autoStopRef.current = setTimeout(() => stopRecording(), MAX_RECORD_SECONDS * 1000)
@@ -192,10 +215,22 @@ export default function Review({ folderId, settings }) {
       // 이미 닫혔으면 무시
     }
 
-    const outcome = await assessment.promise
+    let outcome = await Promise.race([
+      assessment.promise,
+      new Promise((resolve) =>
+        setTimeout(
+          () => resolve({ ok: false, reason: 'network', message: '채점 응답이 오지 않았습니다.' }),
+          ASSESS_TIMEOUT_MS
+        )
+      ),
+    ])
     recorderRef.current = null
     assessRef.current = null
     pushStreamRef.current = null
+
+    // 소리가 거의 안 들어왔으면 Azure가 뭐라고 하든 채점으로 세지 않는다.
+    // (주변 소음을 문장으로 '인식됨' 처리해 0점을 돌려주는 경우가 있다)
+    if (silent) outcome = { ok: false, reason: 'nomatch' }
 
     if (!outcome.ok) {
       if (outcome.reason === 'nomatch') {
@@ -319,6 +354,9 @@ export default function Review({ folderId, settings }) {
             정답 보기
           </button>
         )}
+
+        {/* 타이핑 모드에서도 그대로 쓸 수 있고, 한 번 들은 문장은 인터넷 없이도 재생된다 */}
+        <ListenButton text={card.english_text} settings={settings} full />
       </section>
 
       {!online && mode === 'speak' && (
@@ -349,6 +387,7 @@ export default function Review({ folderId, settings }) {
           canRecord={hasKey && online}
           onStart={startRecording}
           onStop={stopRecording}
+          onSwitchToTyping={() => switchMode('type')}
         />
       ) : (
         <TypePanel
@@ -387,7 +426,17 @@ function ReviewHeader({ folder, progress }) {
 
 /* ---------------- 말하기 ---------------- */
 
-function SpeakPanel({ phase, level, problem, result, audioUrl, canRecord, onStart, onStop }) {
+function SpeakPanel({
+  phase,
+  level,
+  problem,
+  result,
+  audioUrl,
+  canRecord,
+  onStart,
+  onStop,
+  onSwitchToTyping,
+}) {
   return (
     <section className="card stack">
       {phase === 'recording' ? (
@@ -429,7 +478,17 @@ function SpeakPanel({ phase, level, problem, result, audioUrl, canRecord, onStar
         </div>
       )}
 
-      {problem && <p className="notice notice--bad">{problem.message}</p>}
+      {problem && (
+        <p className="notice notice--bad">
+          {problem.message}
+          {/* 인터넷 문제로 못 했을 때는 막지 말고 타이핑으로 가도록 길을 열어 준다 */}
+          {(problem.kind === 'network' || problem.kind === 'offline') && (
+            <button className="link-btn" onClick={onSwitchToTyping}>
+              타이핑으로 바꾸기
+            </button>
+          )}
+        </p>
+      )}
 
       {result && <ScoreBoard scores={result.scores} overall={result.overall} mode="말하기" />}
 

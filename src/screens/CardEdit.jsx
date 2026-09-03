@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
 import { createCard, deleteCard, getCard, getFolder, updateCard } from '../data.js'
 import { requestPersistentStorage } from '../db.js'
+import ListenButton from '../components/ListenButton.jsx'
 
-export default function CardEdit({ folderId, cardId }) {
+export default function CardEdit({ folderId, cardId, settings }) {
   const isNew = !cardId
 
   const [ready, setReady] = useState(false)
@@ -187,6 +188,7 @@ export default function CardEdit({ folderId, cardId }) {
           <span className="muted">
             휴대폰 자동 수정이 문장을 바꾸지 않도록 이 칸은 교정 기능을 꺼 두었습니다.
           </span>
+          {english.trim() && settings && <ListenButton text={english} settings={settings} full />}
         </div>
 
         {error && <p className="notice notice--bad">{error}</p>}
