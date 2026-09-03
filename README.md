@@ -1,4 +1,4 @@
-# 입트영 복습 앱
+# 영어문장모음집
 
 소리 내어 복습하는 개인용 문장 학습 PWA. 백엔드 없음, 모든 데이터는 기기 안에 저장.
 자세한 기능 명세는 [ebs-review-app-spec.md](./ebs-review-app-spec.md) 참고.

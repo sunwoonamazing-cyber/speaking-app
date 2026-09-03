@@ -101,7 +101,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="head">
-        <h1 className="serif head__title">입트영 복습</h1>
+        <h1 className="serif head__title">영어문장모음집</h1>
         <hr className="rule-line" />
         <p className="muted">1단계 — 기본 골격 · PWA 설치 · 색과 서체 확인</p>
       </header>

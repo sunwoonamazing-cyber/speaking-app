@@ -20,8 +20,8 @@ export default defineConfig({
       injectRegister: null, // main.jsx에서 직접 등록
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'],
       manifest: {
-        name: '입트영 복습',
-        short_name: '입트영',
+        name: '영어문장모음집',
+        short_name: '영어문장모음집',
         description: '소리 내어 복습하는 개인용 문장 학습 노트',
         lang: 'ko',
         dir: 'ltr',
