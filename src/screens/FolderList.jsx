@@ -120,9 +120,14 @@ function Header({ showSearch }) {
       </div>
       <span className="head__actions">
         {showSearch && (
-          <button className="link-btn" onClick={() => navigate('/search')}>
-            카드 찾기
-          </button>
+          <>
+            <button className="link-btn" onClick={() => navigate('/flagged')}>
+              어려운 문장
+            </button>
+            <button className="link-btn" onClick={() => navigate('/search')}>
+              찾기
+            </button>
+          </>
         )}
         <button className="link-btn" onClick={() => navigate('/settings')}>
           설정

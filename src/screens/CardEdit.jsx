@@ -5,6 +5,7 @@ import {
   deleteCard,
   getCard,
   getFolder,
+  listFolders,
   setCardCompleted,
   updateCard,
 } from '../data.js'
@@ -26,6 +27,7 @@ export default function CardEdit({ folderId, cardId, settings }) {
   const [justAdded, setJustAdded] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [folders, setFolders] = useState([])
 
   const koreanRef = useRef(null)
 
@@ -54,6 +56,8 @@ export default function CardEdit({ folderId, cardId, settings }) {
         if (!alive) return
         setFolder(f || null)
       }
+      setFolders(await listFolders())
+      if (!alive) return
       setReady(true)
     })()
     return () => {
@@ -112,6 +116,35 @@ export default function CardEdit({ folderId, cardId, settings }) {
       return
     }
     navigate(backTo)
+  }
+
+  async function toggleFlag() {
+    setSaving(true)
+    try {
+      const updated = await updateCard(cardId, { flagged: !card.flagged })
+      if (updated) setCard(updated)
+    } catch (err) {
+      setError(err.message || '바꾸지 못했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /** 카드는 반드시 폴더 하나에 속한다. 옮기면 돌아갈 곳도 새 폴더가 된다. */
+  async function moveToFolder(nextFolderId) {
+    if (!nextFolderId || nextFolderId === card.folder_id) return
+    setSaving(true)
+    try {
+      const updated = await updateCard(cardId, { folder_id: nextFolderId })
+      if (updated) {
+        setCard(updated)
+        setFolder(folders.find((f) => f.id === nextFolderId) || null)
+      }
+    } catch (err) {
+      setError(err.message || '옮기지 못했습니다.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function toggleCompleted(next) {
@@ -264,6 +297,48 @@ export default function CardEdit({ folderId, cardId, settings }) {
           </button>
         )}
       </section>
+
+      {!isNew && card && (
+        <section className="card stack">
+          <h2 className="section-title">이 문장</h2>
+
+          <button
+            className={`btn btn--full ${card.flagged ? 'btn--flagged' : ''}`}
+            onClick={toggleFlag}
+            disabled={saving}
+            aria-pressed={Boolean(card.flagged)}
+          >
+            {card.flagged ? '어려움 표시 지우기' : '어려움으로 표시'}
+          </button>
+          <p className="muted">
+            표시해 두면 어려운 문장 모음에서 따로 볼 수 있고, 복습 순서에서도 조금 앞으로 나옵니다.
+          </p>
+
+          {folders.length > 1 && (
+            <>
+              <hr className="rule-line" />
+              <div className="field">
+                <label className="field__label" htmlFor="card-folder">
+                  폴더 옮기기
+                </label>
+                <select
+                  id="card-folder"
+                  className="input"
+                  value={card.folder_id}
+                  onChange={(e) => moveToFolder(e.target.value)}
+                  disabled={saving}
+                >
+                  {folders.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {!isNew && card && (
         <section className="card stack">

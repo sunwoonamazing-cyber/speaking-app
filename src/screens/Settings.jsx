@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
+import BackupPanel from '../components/BackupPanel.jsx'
 import { getTheme, setTheme } from '../theme.js'
 import { getStorageEstimate, isStoragePersisted, requestPersistentStorage } from '../db.js'
 import { ACCENTS, AZURE_REGIONS, maskKey, testAzureCredentials } from '../settings.js'
@@ -260,6 +261,8 @@ export default function Settings({ settings, onSave }) {
           onChange={pickTheme}
         />
       </section>
+
+      <BackupPanel />
 
       <section className="card stack">
         <h2 className="section-title">저장소</h2>

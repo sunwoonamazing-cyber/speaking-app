@@ -331,6 +331,19 @@ export default function Review({ folderId, settings }) {
     })
   }
 
+  /** 어려움 표시 토글. 우선순위 점수에 +15가 붙고 어려운 문장 모음에 나온다. */
+  async function toggleFlag() {
+    if (!card) return
+    const updated = await updateCard(card.id, { flagged: !card.flagged })
+    if (!updated) return
+    setCards((prev) => {
+      if (!prev) return prev
+      const copy = [...prev]
+      copy[index] = updated
+      return copy
+    })
+  }
+
   /** 암기 완료 표시 / 되돌리기. 실수로 눌러도 바로 되돌릴 수 있게 해 둔다. */
   async function setCompleted(done) {
     if (!card) return
@@ -471,8 +484,17 @@ export default function Review({ folderId, settings }) {
       </div>
 
       <section className="card stack prompt-card">
-        <span className="badge-count">
-          {card.attempt_count > 0 ? `복습 ${card.attempt_count}회` : '새 카드'}
+        <span className="prompt-card__top">
+          <span className="badge-count">
+            {card.attempt_count > 0 ? `복습 ${card.attempt_count}회` : '새 카드'}
+          </span>
+          <button
+            className={`flag-btn ${card.flagged ? 'is-on' : ''}`}
+            onClick={toggleFlag}
+            aria-pressed={Boolean(card.flagged)}
+          >
+            {card.flagged ? '어려움 표시됨' : '어려움'}
+          </button>
         </span>
         <p className="serif prompt-ko">{card.korean_text}</p>
         <hr className="rule-line" />

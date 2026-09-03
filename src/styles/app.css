@@ -650,3 +650,48 @@
   align-items: center;
   gap: var(--sp-3);
 }
+
+/* ---------- 어려움 표시 ---------- */
+
+/* flag 색은 어려움 표시에만 쓴다 (accent, 폴더 색과 자리가 겹치지 않는다) */
+.flag-mark {
+  padding: 1px 7px;
+  border: 1px solid var(--flag);
+  border-radius: 9px;
+  color: var(--flag);
+  font-size: 11px;
+}
+
+.flag-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.flag-btn.is-on {
+  border-color: var(--flag);
+  color: var(--flag);
+  font-weight: 600;
+}
+
+.btn--flagged {
+  border-color: var(--flag);
+  color: var(--flag);
+  font-weight: 600;
+}
+
+.prompt-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* 머리말 동작이 셋이 되면 좁은 화면에서 빠듯해 간격을 줄인다 */
+.head__actions {
+  gap: var(--sp-3);
+}

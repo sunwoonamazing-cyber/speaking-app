@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { navigate } from '../router.js'
-import { colorVar } from '../colors.js'
 import { listAllCards, listFolders } from '../data.js'
-import { AttemptBadge } from './FolderDetail.jsx'
+import CardRow from '../components/CardRow.jsx'
 
 /** 비교 전에 대소문자·군더더기 공백을 정리한다 */
 function normalize(s) {
@@ -119,33 +118,15 @@ export default function CardSearch({ folderId }) {
       {results.length > 0 && (
         <section className="card stack">
           <ul className="card-list">
-            {results.map((card) => {
-              const folder = folderById.get(card.folder_id)
-              const done = card.status === 'completed'
-              return (
-                <li key={card.id} className={`card-row ${done ? 'is-done' : ''}`}>
-                  <span
-                    className="card-row__edge"
-                    style={done ? undefined : { background: colorVar(folder?.color) }}
-                    aria-hidden="true"
-                  />
-                  <button
-                    className="card-row__main"
-                    onClick={() => navigate(`/cards/${card.id}/edit`)}
-                  >
-                    <span className="card-row__top">
-                      <span className="serif card-row__ko">{card.korean_text}</span>
-                      <AttemptBadge card={card} color={done ? null : folder?.color} />
-                    </span>
-                    <span className="card-row__en">{card.english_text}</span>
-                    <span className="card-row__foot">
-                      {scopeAll && folder && <span className="muted">{folder.name}</span>}
-                      {done && <span className="card-row__done">암기 완료</span>}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
+            {results.map((card) => (
+              <CardRow
+                key={card.id}
+                card={card}
+                folder={folderById.get(card.folder_id)}
+                showFolderName={scopeAll}
+                onClick={() => navigate(`/cards/${card.id}/edit`)}
+              />
+            ))}
           </ul>
         </section>
       )}
