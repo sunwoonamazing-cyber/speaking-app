@@ -1,55 +1,94 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { navigate } from '../router.js'
 import ListenButton from '../components/ListenButton.jsx'
-import { getFolder, listCards, updateCard } from '../data.js'
+import {
+  extendSession,
+  getFolder,
+  loadSessionCards,
+  startOrResumeSession,
+  updateCard,
+  updateSession,
+} from '../data.js'
 import { MicRecorder } from '../audio/recorder.js'
 import { createPushStream, overallScore, startAssessment } from '../speech/assess.js'
 import { scoreTyping } from '../speech/typing.js'
-import { gradeLabel, isPass, scoreToGrade } from '../sm2.js'
+import {
+  MANUAL_AGAIN,
+  MANUAL_GOT_IT,
+  applySm2,
+  describeDue,
+  gradeLabel,
+  isPass,
+  scoreToGrade,
+} from '../sm2.js'
+import { todayStr } from '../dates.js'
 
 const MAX_RECORD_SECONDS = 30
 // 응답이 끝내 안 오면 '채점하는 중'에 갇히지 않도록 여기서 끊는다
 const ASSESS_TIMEOUT_MS = 20000
 
 export default function Review({ folderId, settings }) {
-  const [folder, setFolder] = useState(null)
+  const [session, setSession] = useState(null)
   const [cards, setCards] = useState(null)
+  const [folderName, setFolderName] = useState('')
   const [index, setIndex] = useState(0)
   const [mode, setMode] = useState('speak')
+  const [loadError, setLoadError] = useState(null)
+  const [noMore, setNoMore] = useState(false)
+  const [extending, setExtending] = useState(false)
 
   const [phase, setPhase] = useState('ready') // ready | preparing | recording | assessing | result
   const [level, setLevel] = useState(0)
-  const [result, setResult] = useState(null) // 말하기 채점 결과
+  const [result, setResult] = useState(null)
   const [typed, setTyped] = useState('')
   const [typeResult, setTypeResult] = useState(null)
-  const [problem, setProblem] = useState(null) // { kind, message }
+  const [problem, setProblem] = useState(null)
   const [reveal, setReveal] = useState(false)
   const [audioUrl, setAudioUrl] = useState(null)
   const [online, setOnline] = useState(navigator.onLine)
+  const [outcome, setOutcome] = useState(null) // { grade, due, manual }
 
   const recorderRef = useRef(null)
   const pushStreamRef = useRef(null)
   const assessRef = useRef(null)
   const autoStopRef = useRef(null)
+  // 등급을 매기기 직전의 카드 상태. 수동으로 등급을 덮어쓸 때 여기서 다시 계산한다
+  // (그래야 자동 채점분이 두 번 반영되지 않는다)
+  const beforeRef = useRef(null)
 
   const card = cards?.[index] || null
 
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const f = await getFolder(folderId)
-      if (!alive) return
-      if (!f) {
-        navigate('/')
-        return
+      try {
+        const f = await getFolder(folderId)
+        if (!alive) return
+        if (!f) {
+          navigate('/')
+          return
+        }
+        setFolderName(f.name)
+        setMode(f.default_mode || 'speak')
+
+        const s = await startOrResumeSession(folderId)
+        if (!alive) return
+        let list = await loadSessionCards(s.card_ids)
+        if (!alive) return
+
+        // 세션을 만든 뒤 지워진 카드가 있으면 목록에서 조용히 빼 준다
+        if (list.length !== s.card_ids.length) {
+          const ids = list.map((c) => c.id)
+          await updateSession(s.id, { card_ids: ids })
+          s.card_ids = ids
+        }
+
+        setSession(s)
+        setCards(list)
+        setIndex(Math.min(s.current_index, list.length))
+      } catch (err) {
+        if (alive) setLoadError(err?.message || '오늘의 학습을 불러오지 못했습니다.')
       }
-      setFolder(f)
-      setMode(f.default_mode || 'speak')
-      const all = await listCards(folderId)
-      if (!alive) return
-      // 6단계에서 오늘의 묶음 규칙과 세션 저장으로 바뀐다.
-      // 지금은 완료되지 않은 카드를 등록 순서대로 본다.
-      setCards(all.filter((c) => c.status !== 'completed'))
     })()
 
     const on = () => setOnline(true)
@@ -63,7 +102,6 @@ export default function Review({ folderId, settings }) {
     }
   }, [folderId])
 
-  // 화면을 벗어날 때 마이크와 연결을 확실히 놓아준다
   useEffect(() => {
     return () => {
       recorderRef.current?.stop()
@@ -90,6 +128,8 @@ export default function Review({ folderId, settings }) {
     setProblem(null)
     setReveal(false)
     setLevel(0)
+    setOutcome(null)
+    beforeRef.current = null
     setAudioUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev)
       return null
@@ -98,24 +138,37 @@ export default function Review({ folderId, settings }) {
 
   const hasKey = Boolean(settings.azure_key && settings.azure_region)
 
-  /** 채점 결과를 카드에 남긴다. 일정(SM-2)은 6단계에서 붙는다. */
-  async function recordAttempt(scoreValue, usedMode, scores) {
-    if (!card) return
-    const grade = scoreToGrade(scoreValue)
-    const next = {
-      attempt_count: (card.attempt_count || 0) + 1,
-      fail_count: (card.fail_count || 0) + (isPass(grade) ? 0 : 1),
-      last_scores: scores || null,
-      last_avg_score: scoreValue,
-      last_mode: usedMode,
+  /**
+   * 등급을 카드에 반영한다. 복습 횟수·실패 횟수·최근 점수와 함께
+   * SM-2 일정(간격·연속 통과·난이도·다음 복습일)까지 갱신한다.
+   */
+  async function applyGrade({ grade, score, usedMode, scores, manual = false }) {
+    if (!card || !Number.isFinite(grade)) return
+
+    // 자동 채점이면 지금 상태를 기준점으로 잡아 두고,
+    // 수동 덮어쓰기면 그 기준점에서 다시 계산한다
+    if (!manual) beforeRef.current = { ...card }
+    const base = beforeRef.current || card
+    const today = todayStr()
+
+    const schedule = applySm2(base, grade, today)
+    const patch = {
+      ...schedule,
+      attempt_count: (base.attempt_count || 0) + 1,
+      fail_count: (base.fail_count || 0) + (isPass(grade) ? 0 : 1),
+      last_scores: scores ?? base.last_scores ?? null,
+      last_avg_score: Number.isFinite(score) ? score : (base.last_avg_score ?? null),
+      last_mode: usedMode || base.last_mode || null,
     }
-    await updateCard(card.id, next)
+
+    await updateCard(card.id, patch)
     setCards((prev) => {
       if (!prev) return prev
       const copy = [...prev]
-      copy[index] = { ...copy[index], ...next }
+      copy[index] = { ...base, ...patch }
       return copy
     })
+    setOutcome({ grade, due: schedule.review_due_date, manual })
   }
 
   async function startRecording() {
@@ -130,6 +183,7 @@ export default function Review({ folderId, settings }) {
 
     setProblem(null)
     setResult(null)
+    setOutcome(null)
     setAudioUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev)
       return null
@@ -187,7 +241,10 @@ export default function Review({ folderId, settings }) {
       recorderRef.current = null
       pushStreamRef.current = null
       setPhase('ready')
-      setProblem({ kind: 'network', message: '채점을 시작하지 못했습니다. ' + (err?.message || '') })
+      setProblem({
+        kind: 'network',
+        message: '채점을 시작하지 못했습니다. ' + (err?.message || ''),
+      })
       return
     }
 
@@ -215,7 +272,7 @@ export default function Review({ folderId, settings }) {
       // 이미 닫혔으면 무시
     }
 
-    let outcome = await Promise.race([
+    let assessed = await Promise.race([
       assessment.promise,
       new Promise((resolve) =>
         setTimeout(
@@ -230,10 +287,10 @@ export default function Review({ folderId, settings }) {
 
     // 소리가 거의 안 들어왔으면 Azure가 뭐라고 하든 채점으로 세지 않는다.
     // (주변 소음을 문장으로 '인식됨' 처리해 0점을 돌려주는 경우가 있다)
-    if (silent) outcome = { ok: false, reason: 'nomatch' }
+    if (silent) assessed = { ok: false, reason: 'nomatch' }
 
-    if (!outcome.ok) {
-      if (outcome.reason === 'nomatch') {
+    if (!assessed.ok) {
+      if (assessed.reason === 'nomatch') {
         // 명세: 인식 실패는 0점 오답으로 기록하지 않는다. 카드 일정은 그대로 둔다.
         setProblem({
           kind: 'nomatch',
@@ -244,28 +301,65 @@ export default function Review({ folderId, settings }) {
               : '잘 들리지 않았어요. 다시 녹음해 주세요.',
         })
       } else {
-        setProblem({ kind: outcome.reason, message: outcome.message })
+        setProblem({ kind: assessed.reason, message: assessed.message })
       }
       setPhase('ready')
       return
     }
 
-    setResult(outcome)
+    setResult(assessed)
     setPhase('result')
-    await recordAttempt(outcome.overall ?? overallScore(outcome.scores), 'speak', outcome.scores)
+    const score = assessed.overall ?? overallScore(assessed.scores)
+    await applyGrade({
+      grade: scoreToGrade(score),
+      score,
+      usedMode: 'speak',
+      scores: assessed.scores,
+    })
   }
 
   async function gradeTyping() {
     if (!card) return
-    const outcome = scoreTyping(typed, card.english_text)
-    setTypeResult(outcome)
+    const typedResult = scoreTyping(typed, card.english_text)
+    setTypeResult(typedResult)
     setPhase('result')
-    await recordAttempt(outcome.score, 'type', null)
+    await applyGrade({
+      grade: scoreToGrade(typedResult.score),
+      score: typedResult.score,
+      usedMode: 'type',
+      scores: null,
+    })
   }
 
-  function goNext() {
+  async function goNext() {
     resetCardState()
-    setIndex((i) => i + 1)
+    const nextIndex = index + 1
+    setIndex(nextIndex)
+    if (session) {
+      const updated = await updateSession(session.id, {
+        current_index: nextIndex,
+        completed: nextIndex >= cards.length,
+      })
+      if (updated) setSession(updated)
+    }
+  }
+
+  async function handleExtend() {
+    if (!session) return
+    setExtending(true)
+    try {
+      const { session: next, added } = await extendSession(session)
+      if (added > 0) {
+        const list = await loadSessionCards(next.card_ids)
+        setSession(next)
+        setCards(list)
+        resetCardState()
+      } else {
+        setNoMore(true)
+      }
+    } finally {
+      setExtending(false)
+    }
   }
 
   function switchMode(next) {
@@ -276,14 +370,30 @@ export default function Review({ folderId, settings }) {
 
   /* ---------------- 화면 ---------------- */
 
-  if (!folder || cards === null) return <p className="muted">불러오는 중…</p>
+  if (loadError) {
+    return (
+      <>
+        <p className="notice notice--bad">{loadError}</p>
+        <button className="btn btn--full" onClick={() => navigate(`/folders/${folderId}`)}>
+          폴더로 돌아가기
+        </button>
+      </>
+    )
+  }
+
+  if (!session || cards === null) return <p className="muted">불러오는 중…</p>
 
   if (cards.length === 0) {
     return (
       <>
-        <ReviewHeader folder={folder} />
+        <ReviewHeader folderId={folderId} name={folderName} />
         <section className="card stack">
-          <p>이 폴더에 복습할 카드가 없습니다.</p>
+          <h2 className="serif done-title">오늘 볼 카드가 없습니다</h2>
+          <hr className="rule-line" />
+          <p className="muted">
+            복습일이 아직 안 된 카드는 억지로 끌어오지 않습니다. 그래야 간격 반복이 제 몫을 합니다.
+            내일 다시 오시면 됩니다.
+          </p>
           <button className="btn btn--full" onClick={() => navigate(`/folders/${folderId}`)}>
             폴더로 돌아가기
           </button>
@@ -295,22 +405,25 @@ export default function Review({ folderId, settings }) {
   if (index >= cards.length) {
     return (
       <>
-        <ReviewHeader folder={folder} />
+        <ReviewHeader folderId={folderId} name={folderName} />
         <section className="card stack">
           <h2 className="serif done-title">오늘 몫을 끝냈습니다</h2>
           <hr className="rule-line" />
           <p className="muted">카드 {cards.length}장을 봤습니다.</p>
-          <button className="btn btn--primary btn--full" onClick={() => navigate(`/folders/${folderId}`)}>
-            폴더로 돌아가기
-          </button>
+
+          {noMore ? (
+            <p className="muted">지금 더 볼 수 있는 카드가 없습니다.</p>
+          ) : (
+            <button className="btn btn--full" onClick={handleExtend} disabled={extending}>
+              {extending ? '가져오는 중' : '더 하기'}
+            </button>
+          )}
+
           <button
-            className="btn btn--full"
-            onClick={() => {
-              resetCardState()
-              setIndex(0)
-            }}
+            className="btn btn--primary btn--full"
+            onClick={() => navigate(`/folders/${folderId}`)}
           >
-            처음부터 다시 보기
+            폴더로 돌아가기
           </button>
         </section>
       </>
@@ -321,7 +434,11 @@ export default function Review({ folderId, settings }) {
 
   return (
     <>
-      <ReviewHeader folder={folder} progress={`${index + 1} / ${cards.length}`} />
+      <ReviewHeader
+        folderId={folderId}
+        name={folderName}
+        progress={`${index + 1} / ${cards.length}`}
+      />
 
       <div className="seg seg--tight">
         <button
@@ -400,6 +517,35 @@ export default function Review({ folderId, settings }) {
         />
       )}
 
+      {phase === 'result' && outcome && (
+        <section className="card stack">
+          <div className="check-row">
+            <span className="check-row__label">다음 복습</span>
+            <span className="check-row__value check-row__value--ok">
+              {describeDue(outcome.due)}
+            </span>
+          </div>
+
+          <hr className="rule-line" />
+
+          <p className="muted">채점이 실제 느낌과 다르면 직접 정할 수 있습니다.</p>
+          <div className="btn-row">
+            <button
+              className={`btn ${outcome.manual && !isPass(outcome.grade) ? 'is-chosen' : ''}`}
+              onClick={() => applyGrade({ grade: MANUAL_AGAIN, manual: true })}
+            >
+              다시 볼래요
+            </button>
+            <button
+              className={`btn ${outcome.manual && isPass(outcome.grade) ? 'is-chosen' : ''}`}
+              onClick={() => applyGrade({ grade: MANUAL_GOT_IT, manual: true })}
+            >
+              알겠어요
+            </button>
+          </div>
+        </section>
+      )}
+
       {phase === 'result' && (
         <button className="btn btn--primary btn--full btn-row--spaced" onClick={goNext}>
           {index + 1 < cards.length ? '다음 카드' : '끝내기'}
@@ -409,16 +555,16 @@ export default function Review({ folderId, settings }) {
   )
 }
 
-function ReviewHeader({ folder, progress }) {
+function ReviewHeader({ folderId, name, progress }) {
   return (
     <header className="head">
       <div className="head--row">
-        <button className="link-btn" onClick={() => navigate(`/folders/${folder.id}`)}>
+        <button className="link-btn" onClick={() => navigate(`/folders/${folderId}`)}>
           그만하기
         </button>
         {progress && <span className="progress">{progress}</span>}
       </div>
-      <h1 className="serif head__title head__title--small">{folder.name}</h1>
+      <h1 className="serif head__title head__title--small">{name}</h1>
       <hr className="rule-line" />
     </header>
   )
@@ -473,7 +619,6 @@ function SpeakPanel({
       {audioUrl && phase !== 'recording' && (
         <div className="stack">
           <span className="field__label">내 녹음</span>
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio className="player" src={audioUrl} controls preload="metadata" />
         </div>
       )}
@@ -570,11 +715,7 @@ function TypePanel({ phase, typed, setTyped, result, reference, onGrade }) {
       </div>
 
       {phase !== 'result' ? (
-        <button
-          className="btn btn--primary btn--full"
-          onClick={onGrade}
-          disabled={!typed.trim()}
-        >
+        <button className="btn btn--primary btn--full" onClick={onGrade} disabled={!typed.trim()}>
           채점하기
         </button>
       ) : (

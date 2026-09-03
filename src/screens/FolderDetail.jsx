@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { navigate } from '../router.js'
 import { colorVar } from '../colors.js'
-import { countDueToday, getFolder, listCards } from '../data.js'
+import { countDueToday, getFolder, getSession, listCards } from '../data.js'
 
 /**
  * 복습 횟수 배지 — 조용한 정보라 rule 색의 작은 숫자로만 둔다.
@@ -23,6 +23,7 @@ export default function FolderDetail({ folderId }) {
   const [folder, setFolder] = useState(null)
   const [cards, setCards] = useState(null)
   const [missing, setMissing] = useState(false)
+  const [session, setSession] = useState(null)
 
   useEffect(() => {
     let alive = true
@@ -35,7 +36,9 @@ export default function FolderDetail({ folderId }) {
       }
       setFolder(f)
       const list = await listCards(folderId)
-      if (alive) setCards(list)
+      if (!alive) return
+      setCards(list)
+      setSession(await getSession(folderId))
     })()
     return () => {
       alive = false
@@ -55,8 +58,17 @@ export default function FolderDetail({ folderId }) {
 
   if (!folder || cards === null) return <p className="muted">불러오는 중…</p>
 
-  const today = countDueToday(cards, folder.daily_target)
   const completed = cards.filter((c) => c.status === 'completed').length
+  const remaining = session
+    ? Math.max(0, session.card_ids.length - session.current_index)
+    : countDueToday(cards, folder.daily_target)
+  const sessionText = session
+    ? remaining > 0
+      ? `오늘 묶음 ${session.card_ids.length}장 가운데 ${remaining}장 남았습니다.`
+      : '오늘 몫을 끝냈습니다.'
+    : remaining > 0
+      ? `오늘 볼 카드 ${remaining}장`
+      : '오늘 볼 카드가 없습니다.'
 
   return (
     <>
@@ -81,17 +93,17 @@ export default function FolderDetail({ folderId }) {
 
       <section className="card stack">
         <h2 className="section-title">오늘의 학습</h2>
-        <p>{today > 0 ? `오늘 볼 카드 ${today}장` : '오늘 볼 카드가 없습니다.'}</p>
+        <p>{sessionText}</p>
         <button
           className="btn btn--primary btn--full"
           onClick={() => navigate(`/folders/${folderId}/review`)}
           disabled={cards.length === 0}
         >
-          복습 시작하기
+          {!session ? '오늘의 학습 시작하기' : remaining > 0 ? '이어서 하기' : '더 하기'}
         </button>
         <p className="muted">
-          지금은 완료되지 않은 카드를 등록 순서대로 봅니다. 오늘의 묶음 구성과 이어보기는 6단계에서
-          붙습니다.
+          하루 목표는 {folder.daily_target}장입니다. 복습일이 아직 안 된 카드는 끌어오지 않으므로
+          목표보다 적을 수 있습니다.
         </p>
       </section>
 

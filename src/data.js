@@ -1,6 +1,7 @@
 import { getDB } from './db.js'
 import { pickUnusedColor } from './colors.js'
-import { todayStr } from './dates.js'
+import { addDays, todayStr } from './dates.js'
+import { priorityScore } from './sm2.js'
 
 const uid = () =>
   crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
@@ -182,41 +183,174 @@ export async function deleteCard(id) {
 }
 
 /* ------------------------------------------------------------------ */
-/* 집계                                                                 */
+/* 오늘의 묶음                                                          */
 /* ------------------------------------------------------------------ */
 
 /**
- * 오늘 학습할 카드 수.
- * 명세의 묶음 구성 규칙을 그대로 따른다 — 새 카드를 먼저 채우고,
- * 남은 자리는 복습일이 지난 카드로 채우되, 아직 복습일이 안 된 카드는 끌어오지 않는다.
- * 그래서 목표보다 적을 수 있다.
+ * 오늘 볼 카드 묶음을 만든다. 명세의 순서를 그대로 따른다.
+ *
+ * 1. 새 카드를 먼저 채운다 — 등록한 순서(오래된 것부터)
+ * 2. 남은 자리를 복습이 필요한 카드로 채운다 — 우선순위 점수가 높은 순
+ * 3. 목표에 못 미쳐도 아직 복습일이 안 된 카드는 끌어오지 않는다
+ *    ("오늘은 30개로 끝"이 정상 동작이다)
+ * 4. 새 카드만으로 목표를 넘으면 넘치는 새 카드는 다음 날로 미룬다
  */
-export function countDueToday(cards, dailyTarget = DEFAULT_DAILY_TARGET, today = todayStr()) {
-  let newCount = 0
-  let dueCount = 0
-  for (const c of cards) {
-    if (c.status === 'new') newCount += 1
-    else if (c.status === 'learning' && c.review_due_date && c.review_due_date <= today) {
-      dueCount += 1
-    }
-  }
-  return Math.min(newCount + dueCount, dailyTarget)
+export function buildTodayBundle(cards, dailyTarget, today = todayStr(), excludeIds = new Set()) {
+  const pool = cards.filter((c) => c.status !== 'completed' && !excludeIds.has(c.id))
+
+  const fresh = pool
+    .filter((c) => c.status === 'new')
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+
+  const due = pool
+    .filter((c) => c.status === 'learning' && c.review_due_date && c.review_due_date <= today)
+    .sort(
+      (a, b) =>
+        priorityScore(b, today) - priorityScore(a, today) ||
+        a.created_at.localeCompare(b.created_at) // 동점이면 먼저 등록한 카드가 앞
+    )
+
+  return [...fresh, ...due].slice(0, dailyTarget).map((c) => c.id)
 }
 
-/** 폴더 목록 화면에 필요한 폴더별 숫자 묶음 */
-export function summarizeFolders(folders, allCards, today = todayStr()) {
+/** 오늘 학습할 카드 수 (폴더 목록·상세 화면 표시용) */
+export function countDueToday(cards, dailyTarget = DEFAULT_DAILY_TARGET, today = todayStr()) {
+  return buildTodayBundle(cards, dailyTarget, today).length
+}
+
+/* ------------------------------------------------------------------ */
+/* 학습 세션 — 폴더별로 하루에 하나                                       */
+/* ------------------------------------------------------------------ */
+
+export function sessionId(folderId, date) {
+  return `${folderId}:${date}`
+}
+
+export async function getSession(folderId, today = todayStr()) {
+  const db = await getDB()
+  return (await db.get('sessions', sessionId(folderId, today))) || null
+}
+
+/**
+ * 오늘 세션을 가져오고, 없으면 새로 만든다.
+ * 한 번 만든 묶음은 그날 하루 고정이다 — 앱을 껐다 켜도 같은 목록에서 이어진다.
+ */
+export async function startOrResumeSession(folderId, today = todayStr()) {
+  const db = await getDB()
+  const id = sessionId(folderId, today)
+
+  const existing = await db.get('sessions', id)
+  if (existing) return existing
+
+  const folder = await db.get('folders', folderId)
+  const cards = await listCards(folderId)
+  const card_ids = buildTodayBundle(cards, folder?.daily_target || DEFAULT_DAILY_TARGET, today)
+
+  const session = {
+    id,
+    folder_id: folderId,
+    date: today,
+    card_ids,
+    current_index: 0,
+    completed: card_ids.length === 0,
+  }
+  await db.put('sessions', session)
+  pruneOldSessions(today) // 지난 세션이 쌓이지 않게 뒤에서 정리한다
+  return session
+}
+
+export async function updateSession(id, patch) {
+  const db = await getDB()
+  const session = await db.get('sessions', id)
+  if (!session) return null
+  const next = { ...session, ...patch }
+  await db.put('sessions', next)
+  return next
+}
+
+/**
+ * 오늘 몫을 끝낸 뒤 "더 하기".
+ * 이미 본 카드는 빼고 같은 규칙으로 다음 묶음을 만들어 뒤에 붙인다.
+ */
+export async function extendSession(session, today = todayStr()) {
+  const db = await getDB()
+  const folder = await db.get('folders', session.folder_id)
+  const cards = await listCards(session.folder_id)
+  const more = buildTodayBundle(
+    cards,
+    folder?.daily_target || DEFAULT_DAILY_TARGET,
+    today,
+    new Set(session.card_ids)
+  )
+  if (more.length === 0) return { session, added: 0 }
+
+  const next = await updateSession(session.id, {
+    card_ids: [...session.card_ids, ...more],
+    completed: false,
+  })
+  return { session: next, added: more.length }
+}
+
+/** 30일보다 오래된 세션은 지운다 (실패해도 학습에는 지장이 없다) */
+async function pruneOldSessions(today = todayStr()) {
+  try {
+    const db = await getDB()
+    const cutoff = addDays(today, -30)
+    const all = await db.getAll('sessions')
+    const old = all.filter((s) => s.date < cutoff)
+    if (old.length === 0) return
+    const tx = db.transaction('sessions', 'readwrite')
+    await Promise.all(old.map((s) => tx.store.delete(s.id)))
+    await tx.done
+  } catch {
+    // 정리에 실패해도 그냥 둔다
+  }
+}
+
+/** 세션의 카드 순서를 지킨 채 카드를 읽어온다. 그새 지워진 카드는 건너뛴다. */
+export async function loadSessionCards(cardIds) {
+  const db = await getDB()
+  const rows = await Promise.all(cardIds.map((id) => db.get('cards', id)))
+  return rows.filter(Boolean)
+}
+
+/* ------------------------------------------------------------------ */
+/* 폴더 목록 집계                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 폴더 목록 화면에 필요한 숫자들.
+ * 오늘 세션이 이미 있으면 "남은 장수"를, 없으면 오늘 볼 장수를 보여준다.
+ */
+export function summarizeFolders(folders, allCards, sessions = [], today = todayStr()) {
   const byFolder = new Map(folders.map((f) => [f.id, []]))
   for (const card of allCards) {
     const bucket = byFolder.get(card.folder_id)
     if (bucket) bucket.push(card)
   }
+  const sessionByFolder = new Map(
+    sessions.filter((s) => s.date === today).map((s) => [s.folder_id, s])
+  )
+
   return folders.map((folder) => {
     const cards = byFolder.get(folder.id) || []
+    const session = sessionByFolder.get(folder.id)
+    const remaining = session
+      ? Math.max(0, session.card_ids.length - session.current_index)
+      : countDueToday(cards, folder.daily_target, today)
+
     return {
       folder,
       total: cards.length,
       completed: cards.filter((c) => c.status === 'completed').length,
-      today: countDueToday(cards, folder.daily_target, today),
+      today: remaining,
+      started: Boolean(session),
+      sessionDone: Boolean(session && remaining === 0),
     }
   })
+}
+
+export async function listSessions() {
+  const db = await getDB()
+  return db.getAll('sessions')
 }

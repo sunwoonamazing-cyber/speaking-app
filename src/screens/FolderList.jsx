@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { navigate } from '../router.js'
 import { colorVar } from '../colors.js'
-import { listAllCards, listFolders, moveFolder, summarizeFolders } from '../data.js'
+import { listAllCards, listFolders, listSessions, moveFolder, summarizeFolders } from '../data.js'
 
 export default function FolderList() {
   const [rows, setRows] = useState(null)
@@ -12,8 +12,12 @@ export default function FolderList() {
   }, [])
 
   async function load() {
-    const [folders, cards] = await Promise.all([listFolders(), listAllCards()])
-    setRows(summarizeFolders(folders, cards))
+    const [folders, cards, sessions] = await Promise.all([
+      listFolders(),
+      listAllCards(),
+      listSessions(),
+    ])
+    setRows(summarizeFolders(folders, cards, sessions))
   }
 
   async function handleMove(id, direction) {
@@ -48,14 +52,20 @@ export default function FolderList() {
       ) : (
         <>
           <ul className="folder-list">
-            {rows.map(({ folder, total, completed, today }, i) => (
+            {rows.map(({ folder, total, completed, today, started, sessionDone }, i) => (
               <li key={folder.id} className="folder-item">
                 <span className="folder-item__tab" style={{ background: colorVar(folder.color) }} />
 
                 <button className="folder-item__main" onClick={() => navigate(`/folders/${folder.id}`)}>
                   <span className="serif folder-item__name">{folder.name}</span>
                   <span className="folder-item__today">
-                    {today > 0 ? `오늘 ${today}장` : '오늘 볼 카드 없음'}
+                    {sessionDone
+                      ? '오늘 몫 끝'
+                      : today === 0
+                        ? '오늘 볼 카드 없음'
+                        : started
+                          ? `오늘 ${today}장 남음`
+                          : `오늘 ${today}장`}
                   </span>
                   <span className="folder-item__meta muted">
                     전체 {total}장
