@@ -114,25 +114,25 @@ export default function FolderList() {
 
 function Header({ showSearch }) {
   return (
-    <header className="head head--row">
-      <div>
-        <h1 className="serif head__title">영어문장모음집</h1>
-      </div>
-      <span className="head__actions">
+    <header className="head">
+      {/* 제목이 한 줄을 온전히 쓰도록 동작들은 아래 줄 오른쪽으로 내린다 */}
+      <h1 className="serif head__title">영어문장모음집</h1>
+      <div className="head__actions head__actions--below">
         {showSearch && (
           <>
             <button className="link-btn" onClick={() => navigate('/flagged')}>
               어려운 문장
             </button>
             <button className="link-btn" onClick={() => navigate('/search')}>
-              찾기
+              카드 찾기
             </button>
           </>
         )}
         <button className="link-btn" onClick={() => navigate('/settings')}>
           설정
         </button>
-      </span>
+      </div>
+      <hr className="rule-line" />
     </header>
   )
 }

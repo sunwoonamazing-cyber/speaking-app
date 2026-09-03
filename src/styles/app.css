@@ -695,3 +695,13 @@
 .head__actions {
   gap: var(--sp-3);
 }
+
+/* 제목 아래 줄에 오른쪽으로 붙는 동작 묶음 */
+.head__actions--below {
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}
+
+.head__actions--below + .rule-line {
+  margin-top: var(--sp-3);
+}
