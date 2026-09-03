@@ -41,6 +41,10 @@ Azure 키는 **코드나 저장소에 절대 넣지 않는다.** 앱의 설정 �
 | `vite.config.js` | base 경로, PWA manifest·서비스워커, Azure SDK용 `global` 정의 |
 | `src/styles/tokens.css` | 색·서체·간격 토큰 (라이트/다크) |
 | `src/styles/base.css` | 공통 레이아웃·카드·버튼 |
-| `src/components/UpdatePrompt.jsx` | 새 버전 감지 시 "새로고침" 안내 |
+|  | IndexedDB 열기·스토어 정의, 저장소 영구 보관 요청 |
+|  | 전역 설정 읽기/쓰기, Azure 키·지역 연결 확인 |
+|  | 해시 라우팅 (안드로이드 뒤로가기 대응) |
+|  | 화면별 컴포넌트 (홈, 설정) |
+|  | 새 버전 감지 시 "새로고침" 안내 |
 | `scripts/make-icons.mjs` | 앱 아이콘 PNG 생성 (`node scripts/make-icons.mjs`) |
 | `.github/workflows/deploy.yml` | main 브랜치 push 시 자동 배포 |

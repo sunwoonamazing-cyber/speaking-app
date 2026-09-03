@@ -80,70 +80,99 @@
   font-weight: 600;
 }
 
-/* ---------- 서체 견본 ---------- */
+/* ---------- 입력 ---------- */
 
-.sample-serif {
-  font-size: 22px;
-  line-height: 1.5;
-}
-
-.sample-sans {
-  font-size: 17px;
-}
-
-/* ---------- 색 견본 ---------- */
-
-.swatches {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-3);
-}
-
-.swatch {
+.field {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
 }
 
-.swatch__chip {
-  height: 34px;
+.field__label {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.field__row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.field__row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  background: var(--paper);
+  color: var(--ink);
   border: var(--border);
   border-radius: var(--radius);
+  font: inherit;
+  font-size: 16px; /* 16px 미만이면 iOS가 화면을 확대해버린다 */
 }
 
-.folder-demo {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
 }
 
-.folder-demo__item {
+.input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+/* ---------- 버튼 배치 ---------- */
+
+.btn-row {
   display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  padding: var(--sp-3) 0;
-  border-bottom: var(--border);
+  gap: var(--sp-2);
+}
+
+.btn-row .btn {
+  flex: 1;
+}
+
+.btn--tight {
+  flex: none;
+  padding: 0 var(--sp-3);
+}
+
+/* 문장 안에 놓이는 조용한 동작 (홈으로, 키 지우기) */
+.link-btn {
+  align-self: flex-start;
+  padding: var(--sp-1) 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn--danger {
+  color: var(--flag);
+}
+
+/* ---------- 결과 안내 문구 ---------- */
+
+.notice {
+  padding: var(--sp-3);
+  border: var(--border);
+  border-radius: var(--radius);
   font-size: 15px;
 }
 
-.folder-demo__item:last-child {
-  border-bottom: 0;
+.notice--ok {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-/* 색인 탭 모양 세로 막대 (폭 4px) */
-.folder-demo__tab {
-  width: 4px;
-  align-self: stretch;
-  min-height: 26px;
-  border-radius: 2px;
-  flex: none;
-}
-
-.folder-demo__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
+.notice--bad {
+  border-color: var(--flag);
+  color: var(--flag);
 }
