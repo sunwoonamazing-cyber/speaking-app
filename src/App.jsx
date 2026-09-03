@@ -44,11 +44,19 @@ export default function App() {
     window.addEventListener('online', on)
     window.addEventListener('offline', off)
 
+    // 첫 방문에서는 등록이 아직 끝나지 않았을 수 있다.
+    // getRegistration()으로 즉시 한 번 보고, ready로 활성화까지 기다린다.
+    let swTimer
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .getRegistration()
-        .then((reg) => setSwState(reg ? '등록됨' : '아직 없음'))
+        .then((reg) => setSwState(reg?.active ? '등록됨' : '등록 중'))
+        .catch(() => {})
+      navigator.serviceWorker.ready
+        .then(() => setSwState('등록됨'))
         .catch(() => setSwState('확인 실패'))
+      // 끝내 활성화되지 않으면 계속 '등록 중'으로 남지 않게 한다
+      swTimer = setTimeout(() => setSwState((s) => (s === '등록됨' ? s : '등록 실패')), 15000)
     } else {
       setSwState('지원 안 함')
     }
@@ -59,6 +67,7 @@ export default function App() {
       window.removeEventListener('resize', measure)
       window.removeEventListener('online', on)
       window.removeEventListener('offline', off)
+      clearTimeout(swTimer)
     }
   }, [])
 
